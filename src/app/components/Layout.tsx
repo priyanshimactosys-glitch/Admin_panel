@@ -52,7 +52,7 @@ export default function Layout() {
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-gray-900">Voxis</h1>
+                <h1 className="font-semibold text-gray-900">VOXIS</h1>
                 <p className="text-xs text-gray-500">Admin Panel</p>
               </div>
             </div>
