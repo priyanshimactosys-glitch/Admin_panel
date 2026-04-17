@@ -216,7 +216,7 @@ export default function Settings() {
                 <Label htmlFor="caller-id">Default Caller ID</Label>
                 <Input
                   id="caller-id"
-                  defaultValue="NVBS System"
+                  defaultValue="Voxis System"
                   className="mt-1.5"
                 />
               </div>
@@ -431,7 +431,7 @@ export default function Settings() {
                 <Label htmlFor="db-name">Database Name</Label>
                 <Input
                   id="db-name"
-                  placeholder="nvbs_contacts"
+                  placeholder="Voxis_contacts"
                   className="mt-1.5"
                 />
               </div>

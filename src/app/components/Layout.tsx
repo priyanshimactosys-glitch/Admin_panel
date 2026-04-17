@@ -52,7 +52,7 @@ export default function Layout() {
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-gray-900">NVBS</h1>
+                <h1 className="font-semibold text-gray-900">Voxis</h1>
                 <p className="text-xs text-gray-500">Admin Panel</p>
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function Layout() {
                   Admin User
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  admin@nvbs.zm
+                  admin@Voxis.zm
                 </p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function Layout() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold text-gray-900">NVBS</span>
+              <span className="font-semibold text-gray-900">Voxis</span>
             </div>
             <div className="w-6" />
           </div>

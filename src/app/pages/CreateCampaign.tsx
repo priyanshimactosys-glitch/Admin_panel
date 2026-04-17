@@ -367,7 +367,7 @@ export default function CreateCampaign() {
                 <Label htmlFor="caller-id">Caller ID Display</Label>
                 <Input
                   id="caller-id"
-                  placeholder="e.g., NVBS System"
+                  placeholder="e.g., Voxis System"
                   className="mt-1.5"
                 />
               </div>

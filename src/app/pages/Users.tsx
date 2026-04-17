@@ -39,7 +39,7 @@ const users = [
   {
     id: 1,
     name: "Admin User",
-    email: "admin@nvbs.zm",
+    email: "admin@Voxis.zm",
     role: "Super Admin",
     status: "active",
     lastLogin: "Apr 17, 2026 10:32 AM",
@@ -48,7 +48,7 @@ const users = [
   {
     id: 2,
     name: "Campaign Manager",
-    email: "campaign@nvbs.zm",
+    email: "campaign@Voxis.zm",
     role: "Campaign Manager",
     status: "active",
     lastLogin: "Apr 17, 2026 09:15 AM",
@@ -57,7 +57,7 @@ const users = [
   {
     id: 3,
     name: "John Mwale",
-    email: "john.mwale@nvbs.zm",
+    email: "john.mwale@Voxis.zm",
     role: "Operator",
     status: "active",
     lastLogin: "Apr 17, 2026 08:45 AM",
@@ -66,7 +66,7 @@ const users = [
   {
     id: 4,
     name: "Grace Phiri",
-    email: "grace.phiri@nvbs.zm",
+    email: "grace.phiri@Voxis.zm",
     role: "Analyst",
     status: "active",
     lastLogin: "Apr 16, 2026 03:22 PM",
@@ -75,7 +75,7 @@ const users = [
   {
     id: 5,
     name: "Peter Banda",
-    email: "peter.banda@nvbs.zm",
+    email: "peter.banda@Voxis.zm",
     role: "Operator",
     status: "inactive",
     lastLogin: "Apr 10, 2026 11:05 AM",
@@ -171,7 +171,7 @@ export default function Users() {
                 <Input
                   id="user-email"
                   type="email"
-                  placeholder="e.g., john@nvbs.zm"
+                  placeholder="e.g., john@Voxis.zm"
                   className="mt-1.5"
                 />
               </div>
