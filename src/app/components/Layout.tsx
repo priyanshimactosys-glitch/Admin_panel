@@ -127,7 +127,7 @@ export default function Layout() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
                 <Phone className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold text-gray-900">Voxis</span>
+              <span className="font-semibold text-gray-900">VOXIS</span>
             </div>
             <div className="w-6" />
           </div>
