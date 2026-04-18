@@ -128,7 +128,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">
-            National Voice Broadcasting System - Overview
+           Voxis - Overview
           </p>
         </div>
         <Link to="/campaigns/create">

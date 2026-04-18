@@ -101,7 +101,6 @@ export default function VoiceLibrary() {
     try {
       setLoading(true);
       const response = await getVoiceMessages();
-      console.log('==>response', response)
       const list = response?.data || [];
       setMessages(list);
     } catch (error) {
@@ -111,7 +110,6 @@ export default function VoiceLibrary() {
       setLoading(false);
     }
   };
-  console.log('==>messae', messages)
   useEffect(() => {
     fetchMessages();
   }, []);

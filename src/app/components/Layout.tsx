@@ -40,27 +40,41 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <Phone className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between p-5 border-b border-gray-200/60 bg-white/60 backdrop-blur-md">
+
+            <div className="flex items-center gap-0">
+
+              {/* Logo Container */}
+              <div className="w-20 h-20 rounded-xl bg-white/70   flex items-center justify-center overflow-hidden">
+                <img
+                  src="/logo.jfif"
+                  alt="Logo"
+                  className="w-full h-full object-contain p-1"
+                />
               </div>
-              <div>
-                <h1 className="font-semibold text-gray-900">VOXIS</h1>
-                <p className="text-xs text-gray-500">Admin Panel</p>
+
+              {/* Optional Text (recommended for branding) */}
+              <div className="leading-tight">
+                <h1 className="text-sm font-semibold text-gray-800 tracking-wide">
+                  VOXIS
+                </h1>
+                <p className="text-[11px] text-gray-500">
+                  Admin Panel
+                </p>
               </div>
+
             </div>
+
             <button
-              className="lg:hidden"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
               onClick={() => setSidebarOpen(false)}
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
 
@@ -77,16 +91,14 @@ export default function Layout() {
                     <Link
                       to={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                        isActive
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
                           ? "bg-blue-50 text-blue-700"
                           : "text-gray-700 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <item.icon
-                        className={`w-5 h-5 ${
-                          isActive ? "text-blue-700" : "text-gray-500"
-                        }`}
+                        className={`w-5 h-5 ${isActive ? "text-blue-700" : "text-gray-500"
+                          }`}
                       />
                       <span className="font-medium">{item.name}</span>
                     </Link>
