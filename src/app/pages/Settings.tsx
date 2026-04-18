@@ -43,10 +43,10 @@ export default function Settings() {
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="calling">Calling</TabsTrigger>
+          {/* <TabsTrigger value="calling">Calling</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="integration">Integration</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger> */}
         </TabsList>
 
         {/* General Settings */}
@@ -63,7 +63,7 @@ export default function Settings() {
                 <Label htmlFor="system-name">System Name</Label>
                 <Input
                   id="system-name"
-                  defaultValue="National Voice Broadcasting System"
+                  defaultValue="VIXOS"
                   className="mt-1.5"
                 />
               </div>
