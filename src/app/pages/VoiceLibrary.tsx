@@ -537,7 +537,7 @@ export default function VoiceLibrary() {
                           variant="ghost"
                           onClick={() => handlePlayPause(itemId)}
                           className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
-                          disabled={!audioSrc}
+                          disabled={!message?.audio_file}
                         >
                           {playingId === itemId ? (
                             <Pause className="w-4 h-4" />
@@ -547,11 +547,11 @@ export default function VoiceLibrary() {
                         </Button>
 
                         <div className="flex-1">
-                          {audioSrc ? (
+                          {message?.audio_file ? (
                             <audio
                               controls
                               className="w-full"
-                              src={audioSrc}
+                              src={import.meta.env.VITE_REACT_UPLOAD_URL + "/" + message.audio_file}
                               preload="none"
                             />
                           ) : (
@@ -576,12 +576,12 @@ export default function VoiceLibrary() {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-sm gap-3">
+                      {/* <div className="flex items-center justify-between text-sm gap-3">
                         <span className="text-gray-600">File Size:</span>
                         <span className="text-gray-900">
                           {message.size || "-"}
                         </span>
-                      </div>
+                      </div> */}
 
                       <div className="flex items-center justify-between text-sm gap-3">
                         <span className="text-gray-600">Status:</span>
