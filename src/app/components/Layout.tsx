@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
   Radio,
@@ -10,8 +10,9 @@ import {
   Phone,
   Menu,
   X,
+  LogOut
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
 const navigation = [
@@ -26,7 +27,22 @@ const navigation = [
 
 export default function Layout() {
   const location = useLocation();
+   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+const [user, setUser] = useState<{ username: string; role: string } | null>(null);
+
+  useEffect(() => {
+    const authData = localStorage.getItem('nvbs_auth');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      setUser({ username: parsed.username, role: parsed.role });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('nvbs_auth');
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -110,19 +126,26 @@ export default function Layout() {
 
           {/* User info */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center gap-3 px-3 py-2 mb-2">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                AD
+                {user?.username.substring(0, 2).toUpperCase() || 'AD'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  Admin User
+                  {user?.username || 'Admin User'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  admin@Voxis.zm
+                  {'Admin'}
                 </p>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4 text-gray-500" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </aside>
