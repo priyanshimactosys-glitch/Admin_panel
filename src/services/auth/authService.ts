@@ -39,7 +39,6 @@ export const loginUser = async (
   return response.data;
 };
 
-/* ================= SIGNUP ================= */
 
 export interface SignupPayload {
   first_name: string;

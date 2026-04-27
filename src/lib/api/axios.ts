@@ -12,10 +12,15 @@ export const Axios = axios.create({
 Axios.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const authData = localStorage.getItem("nvbs_auth");
 
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (authData) {
+        const parsedAuth = JSON.parse(authData);
+        const token = parsedAuth?.token;
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
     }
 
@@ -29,7 +34,7 @@ Axios.interceptors.response.use(
   (error) => {
     console.error("API Error:", error?.response || error.message);
 
-    if (error?.response?.status === 401) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
       console.log("Unauthorized - token expired");
     }
 
