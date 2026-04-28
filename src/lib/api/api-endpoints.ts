@@ -24,4 +24,36 @@ export const API_ENDPOINTS = {
     GET: "/settings",
     UPDATE: "/settings",
   },
+  CAMPAIGNS: {
+    STATS: "/campaigns/stats",
+    RECENT: "/campaigns/recent",
+    TOP_PERFORMANCE: "/campaigns/top-performance",
+
+    LIST: "/campaigns",
+    CREATE: "/campaigns",
+    SAVE_DRAFT: "/campaigns/draft",
+
+    DETAIL: (id: string) => `/campaigns/${id}`,
+    UPDATE: (id: string) => `/campaigns/${id}`,
+    DELETE: (id: string) => `/campaigns/${id}`,
+
+    LAUNCH: (id: string) => `/campaigns/${id}/launch`,
+    PAUSE: (id: string) => `/campaigns/${id}/pause`,
+    CHANGE_STATUS: (id: string) => `/campaigns/${id}/status`,
+  },
+  CONTACTS: {
+    LISTS: "/contact-lists",
+    CREATE_LIST: "/contact-lists",
+    LIST_DETAIL: (id: string) => `/contact-lists/${id}`,
+    UPDATE_LIST: (id: string) => `/contact-lists/${id}`,
+    DELETE_LIST: (id: string) => `/contact-lists/${id}`,
+    IMPORT_LIST: (id: string) => `/contact-lists/import`,
+    LIST_CONTACTS: (id: string) => `/contact-lists/${id}/contacts`,
+
+    CREATE_CONTACT: "/contacts",
+    CONTACT_DETAIL: (id: string) => `/contacts/${id}`,
+    UPDATE_CONTACT: (id: string) => `/contacts/${id}`,
+    DELETE_CONTACT: (id: string) => `/contacts/${id}`,
+    STATS: "/contacts/stats",
+  },
 };

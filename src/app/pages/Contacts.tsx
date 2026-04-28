@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -16,11 +16,12 @@ import {
   UserPlus,
 } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -28,122 +29,282 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
 import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
-const contactLists = [
-  {
-    id: 1,
-    name: "All Zambian Citizens",
-    count: 2400000,
-    lastUpdated: "Apr 17, 2026",
-    status: "active",
-    source: "National Database",
-  },
-  {
-    id: 2,
-    name: "Lusaka Province",
-    count: 450000,
-    lastUpdated: "Apr 17, 2026",
-    status: "active",
-    source: "Regional Filter",
-  },
-  {
-    id: 3,
-    name: "Copperbelt Province",
-    count: 380000,
-    lastUpdated: "Apr 17, 2026",
-    status: "active",
-    source: "Regional Filter",
-  },
-  {
-    id: 4,
-    name: "Youth Segment (18-35)",
-    count: 820000,
-    lastUpdated: "Apr 16, 2026",
-    status: "active",
-    source: "Age Filter",
-  },
-  {
-    id: 5,
-    name: "First-Time Voters",
-    count: 185000,
-    lastUpdated: "Apr 15, 2026",
-    status: "active",
-    source: "Custom Segment",
-  },
-  {
-    id: 6,
-    name: "Rally Attendees - March",
-    count: 52000,
-    lastUpdated: "Apr 10, 2026",
-    status: "active",
-    source: "Event Import",
-  },
-];
+import {
+  ContactItem,
+  ContactListItem,
+  createContactList,
+  deleteContact,
+  deleteContactList,
+  getContactLists,
+  getContactStats,
+  getContactsInList,
+  importContactsIntoList,
+  updateContactList,
+  updateContact,
+} from "../../services/contact/contactService";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
-const recentContacts = [
-  {
-    id: 1,
-    phone: "+260 97 123 4567",
-    name: "John Mwanza",
-    province: "Lusaka",
-    age: 32,
-    status: "active",
-    lastContact: "Apr 17, 2026",
-  },
-  {
-    id: 2,
-    phone: "+260 96 234 5678",
-    name: "Grace Banda",
-    province: "Copperbelt",
-    age: 28,
-    status: "active",
-    lastContact: "Apr 17, 2026",
-  },
-  {
-    id: 3,
-    phone: "+260 95 345 6789",
-    name: "Peter Phiri",
-    province: "Southern",
-    age: 45,
-    status: "active",
-    lastContact: "Apr 16, 2026",
-  },
-  {
-    id: 4,
-    phone: "+260 97 456 7890",
-    name: "Mary Tembo",
-    province: "Eastern",
-    age: 35,
-    status: "opted-out",
-    lastContact: "Apr 15, 2026",
-  },
-  {
-    id: 5,
-    phone: "+260 96 567 8901",
-    name: "Joseph Kabwe",
-    province: "Western",
-    age: 52,
-    status: "active",
-    lastContact: "Apr 14, 2026",
-  },
-];
+const initialListForm = {
+  list_name: "",
+  description: "",
+  list_type: "National Database",
+  province: null as string | null,
+};
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("lists");
 
+  const [contactLists, setContactLists] = useState<ContactListItem[]>([]);
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [stats, setStats] = useState<any>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const [listForm, setListForm] = useState(initialListForm);
+  const [selectedListId, setSelectedListId] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
+
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingList, setEditingList] = useState<ContactListItem | null>(null);
+
+  const [contactEditOpen, setContactEditOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<ContactItem | null>(null);
+
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    mob: "",
+    province: "",
+    status: "active",
+  });
+  const [deleteListTarget, setDeleteListTarget] =
+    useState<ContactListItem | null>(null);
+
+  const [removeContactTarget, setRemoveContactTarget] =
+    useState<ContactItem | null>(null);
+
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+
+  const openContactEdit = (contact: ContactItem) => {
+    setEditingContact(contact);
+    setContactForm({
+      name: contact.name || getContactName(contact),
+      mob: contact.mob || contact.phone || "",
+      province: contact.province || "",
+      status: String(contact.status || "active"),
+    });
+    setContactEditOpen(true);
+  };
+
+  const handleUpdateContact = async () => {
+    if (!editingContact) return;
+
+    try {
+      await updateContact(getContactId(editingContact), {
+        name: contactForm.name,
+        mob: contactForm.mob,
+        province: contactForm.province,
+        status: contactForm.status,
+      });
+
+      setContactEditOpen(false);
+      setEditingContact(null);
+
+      if (selectedListId) {
+        fetchContactsByList(selectedListId);
+      }
+    } catch (error) {
+      console.error("Update Contact Error:", error);
+      alert("Failed to update contact");
+    }
+  };
+
+  const fetchData = async (pageNumber = 1) => {
+    try {
+      setLoading(true);
+
+      const [listsRes, statsRes] = await Promise.all([
+        getContactLists({ page: pageNumber, limit: 9 }),
+        getContactStats(),
+      ]);
+
+      const lists = listsRes?.data || [];
+
+      setContactLists(lists);
+      setStats(statsRes?.data || null);
+
+      setPage(listsRes?.page || 1);
+      setTotalPages(listsRes?.totalPages || 1);
+
+    } catch (error) {
+      console.error("Contacts API Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  const openEdit = (list: ContactListItem) => {
+    setEditingList(list);
+    setListForm({
+      list_name: list.list_name || "",
+      description: list.description || "",
+      list_type: list.list_type || "National Database",
+      province: list.province || null,
+    });
+    setEditOpen(true);
+  };
+
+  const handleUpdateList = async () => {
+    if (!editingList) return;
+
+    try {
+      await updateContactList(editingList.id || editingList._id, listForm);
+
+      setEditOpen(false);
+      setEditingList(null);
+      fetchData(page);
+    } catch (error) {
+      console.error("Update List Error:", error);
+      alert("Failed to update list");
+    }
+  };
+  const fetchContactsByList = async (listId: string) => {
+    try {
+      setSelectedListId(listId);
+      const res = await getContactsInList(listId, {
+        page: 1,
+        limit: 20,
+      });
+      setContacts(res?.data || []);
+      setActiveTab("contacts");
+    } catch (error) {
+      console.error("Get Contacts In List Error:", error);
+      alert("Failed to load contacts");
+    }
+  };
+
+  const handleCreateList = async () => {
+    if (!listForm.list_name) {
+      alert("Please enter list name");
+      return;
+    }
+
+    try {
+      await createContactList(listForm);
+      setListForm(initialListForm);
+      setCreateOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error("Create List Error:", error);
+      alert("Failed to create contact list");
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedListId || !importFile) {
+      alert("Please select list and file");
+      return;
+    }
+
+    try {
+      await importContactsIntoList(selectedListId, importFile);
+      setImportFile(null);
+      setImportOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error("Import Contacts Error:", error);
+      alert("Failed to import contacts");
+    }
+  };
+
+  const handleDeleteList = async () => {
+    if (!deleteListTarget) return;
+
+    const id = getListId(deleteListTarget);
+    if (!id) return;
+
+    try {
+      setConfirmLoading(true);
+      await deleteContactList(id);
+      setDeleteListTarget(null);
+      fetchData(page);
+    } catch (error) {
+      console.error("Delete List Error:", error);
+      alert("Failed to delete list");
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  const handleDeleteContact = async () => {
+    if (!removeContactTarget) return;
+
+    const id = getContactId(removeContactTarget);
+    if (!id) return;
+
+    try {
+      setConfirmLoading(true);
+      await deleteContact(id);
+      setRemoveContactTarget(null);
+
+      if (selectedListId) {
+        fetchContactsByList(selectedListId);
+      }
+    } catch (error) {
+      console.error("Delete Contact Error:", error);
+      alert("Failed to remove contact");
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  const filteredLists = contactLists.filter((list) =>
+    (list.list_name || "")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
+
+  const filteredContacts = contacts.filter((contact) => {
+    const name = contact.name || `${contact.first_name || ""} ${contact.last_name || ""}`;
+    const phone = contact.phone || contact.mob || "";
+
+    return (
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      phone.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const getContactName = (contact: ContactItem) => {
+    return (
+      contact.name ||
+      `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
+      "N/A"
+    );
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString();
+  };
+
+  const getListId = (list: ContactListItem) => list.id || list._id;
+  const getContactId = (contact: ContactItem) => contact.id || contact._id;
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">
@@ -153,32 +314,41 @@ export default function Contacts() {
             Manage contact lists and audience segments
           </p>
         </div>
+
         <div className="flex gap-2">
-          <Dialog>
+          <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Upload className="w-4 h-4 mr-2" />
                 Import
               </Button>
             </DialogTrigger>
+
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Import Contacts</DialogTitle>
               </DialogHeader>
+
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label htmlFor="import-source">Import Source</Label>
-                  <Select>
-                    <SelectTrigger id="import-source" className="mt-1.5">
-                      <SelectValue placeholder="Select source" />
+                  <Label>Select Contact List</Label>
+                  <Select
+                    value={selectedListId}
+                    onValueChange={setSelectedListId}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select list" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="csv">CSV File</SelectItem>
-                      <SelectItem value="excel">Excel File</SelectItem>
-                      <SelectItem value="database">Database Integration</SelectItem>
+                      {contactLists.map((list) => (
+                        <SelectItem key={getListId(list)} value={getListId(list)}>
+                          {list.list_name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div>
                   <Label htmlFor="file-import">File Upload</Label>
                   <div className="mt-1.5 flex items-center justify-center w-full">
@@ -186,39 +356,299 @@ export default function Contacts() {
                       htmlFor="file-import"
                       className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                     >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                        <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Click to upload</span>{" "}
-                          or drag and drop
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          CSV or XLSX (MAX. 50MB)
-                        </p>
-                      </div>
-                      <input id="file-import" type="file" className="hidden" />
+                      <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span>{" "}
+                        CSV or XLSX
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {importFile?.name || "MAX. 50MB"}
+                      </p>
+
+                      <input
+                        id="file-import"
+                        type="file"
+                        accept=".csv,.xlsx,.xls"
+                        className="hidden"
+                        onChange={(e) =>
+                          setImportFile(e.target.files?.[0] || null)
+                        }
+                      />
                     </label>
                   </div>
                 </div>
+
                 <div className="flex gap-3 pt-4">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={handleImport}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
                     Import
                   </Button>
-                  <Button variant="outline" className="flex-1">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setImportOpen(false)}
+                  >
                     Cancel
                   </Button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Create List
-          </Button>
+
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Create List
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create Contact List</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>List Name *</Label>
+                  <Input
+                    value={listForm.list_name}
+                    onChange={(e) =>
+                      setListForm({ ...listForm, list_name: e.target.value })
+                    }
+                    placeholder="e.g., Lusaka Province"
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label>Description</Label>
+                  <Input
+                    value={listForm.description}
+                    onChange={(e) =>
+                      setListForm({ ...listForm, description: e.target.value })
+                    }
+                    placeholder="Optional description"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>List Type *</Label>
+                  <Select
+                    value={listForm.list_type}
+                    onValueChange={(value) =>
+                      setListForm({ ...listForm, list_type: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select list type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="National Database">National Database</SelectItem>
+                      <SelectItem value="Regional Filter">Regional Filter</SelectItem>
+                      <SelectItem value="Age Filter">Age Filter</SelectItem>
+                      <SelectItem value="Custom Segment">Custom Segment</SelectItem>
+                      <SelectItem value="Event Import">Event Import</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Province</Label>
+                  <Select
+                    value={listForm.province || "null"}
+                    onValueChange={(value) =>
+                      setListForm({
+                        ...listForm,
+                        province: value === "null" ? null : value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="null">None</SelectItem>
+                      <SelectItem value="Lusaka">Lusaka</SelectItem>
+                      <SelectItem value="Copperbelt">Copperbelt</SelectItem>
+                      <SelectItem value="Southern">Southern</SelectItem>
+                      <SelectItem value="Eastern">Eastern</SelectItem>
+                      <SelectItem value="Western">Western</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={handleCreateList}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Create
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setCreateOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Edit Contact List</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>List Name *</Label>
+                  <Input
+                    value={listForm.list_name}
+                    onChange={(e) =>
+                      setListForm({ ...listForm, list_name: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>Description</Label>
+                  <Input
+                    value={listForm.description}
+                    onChange={(e) =>
+                      setListForm({ ...listForm, description: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>List Type</Label>
+                  <Select
+                    value={listForm.list_type}
+                    onValueChange={(value) =>
+                      setListForm({ ...listForm, list_type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="National Database">National Database</SelectItem>
+                      <SelectItem value="Regional Filter">Regional Filter</SelectItem>
+                      <SelectItem value="Custom Segment">Custom Segment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleUpdateList} className="flex-1">
+                    Update
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditOpen(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={contactEditOpen} onOpenChange={setContactEditOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Edit Contact</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Name *</Label>
+                  <Input
+                    value={contactForm.name}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, name: e.target.value })
+                    }
+                    placeholder="John Banda Updated"
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label>Mobile *</Label>
+                  <Input
+                    value={contactForm.mob}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, mob: e.target.value })
+                    }
+                    placeholder="0977000001"
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label>Province *</Label>
+                  <Select
+                    value={contactForm.province}
+                    onValueChange={(value) =>
+                      setContactForm({ ...contactForm, province: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lusaka">Lusaka</SelectItem>
+                      <SelectItem value="Copperbelt">Copperbelt</SelectItem>
+                      <SelectItem value="Southern">Southern</SelectItem>
+                      <SelectItem value="Eastern">Eastern</SelectItem>
+                      <SelectItem value="Western">Western</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Status *</Label>
+                  <Select
+                    value={contactForm.status}
+                    onValueChange={(value) =>
+                      setContactForm({ ...contactForm, status: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="opted-out">Opted Out</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={handleUpdateContact}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Update Contact
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setContactEditOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
@@ -226,7 +656,7 @@ export default function Contacts() {
               <div>
                 <p className="text-sm text-gray-600">Total Contacts</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-2">
-                  2.4M
+                  {(stats?.total_contacts || 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-blue-100 p-3 rounded-lg">
@@ -235,13 +665,14 @@ export default function Contacts() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Contact Lists</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-2">
-                  {contactLists.length}
+                  {stats?.total_lists || contactLists.length}
                 </p>
               </div>
               <div className="bg-green-100 p-3 rounded-lg">
@@ -250,13 +681,14 @@ export default function Contacts() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Active Contacts</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-2">
-                  2.35M
+                  {(stats?.active_contacts || 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-purple-100 p-3 rounded-lg">
@@ -265,13 +697,14 @@ export default function Contacts() {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Opted Out</p>
+                <p className="text-sm text-gray-600">Inactive Contacts</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-2">
-                  48K
+                  {(stats?.inactive_contacts || 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-orange-100 p-3 rounded-lg">
@@ -282,7 +715,6 @@ export default function Contacts() {
         </Card>
       </div>
 
-      {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="lists">Contact Lists</TabsTrigger>
@@ -290,11 +722,10 @@ export default function Contacts() {
         </TabsList>
 
         <TabsContent value="lists" className="space-y-6 mt-6">
-          {/* Search */}
           <Card>
             <CardContent className="p-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search contact lists..."
                   value={searchQuery}
@@ -305,82 +736,148 @@ export default function Contacts() {
             </CardContent>
           </Card>
 
-          {/* Contact Lists Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {contactLists.map((list) => (
-              <Card key={list.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {list.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {list.source}
-                        </p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="w-4 h-4 mr-2" />
-                            Export
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading contact lists...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLists.map((list) => {
+                const listId = getListId(list);
 
-                    <div className="bg-blue-50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-blue-600">
-                        {list.count.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">contacts</p>
-                    </div>
+                return (
+                  <Card
+                    key={listId}
+                    className="hover:shadow-lg transition-shadow"
+                  >
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900">
+                              {list.list_name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {list.description || "Contact List"}
+                            </p>
+                          </div>
 
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Status:</span>
-                        <Badge className="bg-green-100 text-green-700 capitalize">
-                          {list.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Last Updated:</span>
-                        <span className="text-gray-900">{list.lastUpdated}</span>
-                      </div>
-                    </div>
+                          <div className="relative">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setOpenMenuId(
+                                  openMenuId === listId ? null : listId
+                                )
+                              }
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
 
-                    <Button variant="outline" className="w-full">
-                      View Details
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                            {openMenuId === listId && (
+                              <div className="absolute right-0 top-9 z-[9999] w-40 rounded-md border border-gray-200 bg-white shadow-lg">
+                                <button
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    openEdit(list);
+                                  }}
+                                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-gray-100"
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit
+                                </button>
+
+                                {/* <button
+                                  type="button"
+                                  className="flex w-full items-center px-3 py-2 text-sm hover:bg-gray-100"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Export
+                                </button> */}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setDeleteListTarget(list);
+                                  }}
+                                  className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 rounded-lg p-4 text-center">
+                          <p className="text-3xl font-bold text-blue-600">
+                            {(list.total_contacts || 0).toLocaleString()}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">contacts</p>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <Badge className="bg-green-100 text-green-700 capitalize">
+                              active
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Last Updated:</span>
+                            <span className="text-gray-900">
+                              {formatDate(list.updated_at || list.created_at)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => fetchContactsByList(listId)}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              <div className="flex justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  disabled={page === 1}
+                  onClick={() => fetchData(page - 1)}
+                >
+                  Prev
+                </Button>
+
+                <span className="px-4 py-2 text-sm">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  disabled={page === totalPages}
+                  onClick={() => fetchData(page + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="contacts" className="space-y-6 mt-6">
-          {/* Search and Filter */}
           <Card>
             <CardContent className="p-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                       placeholder="Search by name or phone..."
                       value={searchQuery}
@@ -389,38 +886,17 @@ export default function Contacts() {
                     />
                   </div>
                 </div>
-                <Select>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="All Provinces" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Provinces</SelectItem>
-                    <SelectItem value="lusaka">Lusaka</SelectItem>
-                    <SelectItem value="copperbelt">Copperbelt</SelectItem>
-                    <SelectItem value="southern">Southern</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="opted-out">Opted Out</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
 
-          {/* Contacts Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Contacts</CardTitle>
+              <CardTitle>Contacts</CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-visible">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
@@ -434,80 +910,143 @@ export default function Contacts() {
                         Province
                       </th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
-                        Age
+                        Gender
+                      </th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                        Age Group
                       </th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
                         Status
                       </th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
-                        Last Contact
+                        Created
                       </th>
                       <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">
                         Actions
                       </th>
                     </tr>
                   </thead>
+
                   <tbody>
-                    {recentContacts.map((contact) => (
-                      <tr
-                        key={contact.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
-                      >
-                        <td className="py-4 px-4">
-                          <p className="font-medium text-gray-900">
-                            {contact.name}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm text-gray-700">
-                            {contact.phone}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm text-gray-700">
-                            {contact.province}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm text-gray-700">{contact.age}</p>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={
-                              contact.status === "active"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }
-                          >
-                            {contact.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm text-gray-700">
-                            {contact.lastContact}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                    {filteredContacts.map((contact) => {
+                      const contactId = getContactId(contact);
+
+                      return (
+                        <tr
+                          key={contactId}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="py-4 px-4">
+                            <p className="font-medium text-gray-900">
+                              {getContactName(contact)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {contact.email || ""}
+                            </p>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <p className="text-sm text-gray-700">
+                              {contact.phone || contact.mob || "N/A"}
+                            </p>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <p className="text-sm text-gray-700">
+                              {contact.province || "N/A"}
+                            </p>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <p className="text-sm text-gray-700">
+                              {contact.gender || "N/A"}
+                            </p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <p className="text-sm text-gray-700">
+                              {contact.age_group || "N/A"}
+                            </p>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={
+                                contact.status === "active" ||
+                                  contact.status === 1
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }
+                            >
+                              {contact.status === 1
+                                ? "active"
+                                : contact.status || "inactive"}
+                            </Badge>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <p className="text-sm text-gray-700">
+                              {formatDate(contact.created_at)}
+                            </p>
+                          </td>
+
+                          <td className="py-4 px-4 text-right">
+                            <div className="relative flex justify-end">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setOpenMenuId(
+                                    openMenuId === contactId ? null : contactId
+                                  )
+                                }
+                              >
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+
+                              {openMenuId === contactId && (
+                                <div className="absolute right-0 top-9 z-[9999] w-36 rounded-md border border-gray-200 bg-white shadow-lg">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      openContactEdit(contact);
+                                    }}
+                                    className="flex w-full items-center px-3 py-2 text-sm hover:bg-gray-100"
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      setRemoveContactTarget(contact);
+                                    }}
+                                    className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Remove
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {filteredContacts.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="py-6 text-center text-sm text-gray-500"
+                        >
+                          No contacts found.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -515,6 +1054,35 @@ export default function Contacts() {
           </Card>
         </TabsContent>
       </Tabs>
+      <ConfirmDialog
+        open={Boolean(deleteListTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteListTarget(null);
+        }}
+        title="Delete Contact List?"
+        description={`Are you sure you want to delete "${deleteListTarget?.list_name || "this list"
+          }"? This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={confirmLoading}
+        onConfirm={handleDeleteList}
+      />
+
+      <ConfirmDialog
+        open={Boolean(removeContactTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRemoveContactTarget(null);
+        }}
+        title="Remove Contact?"
+        description={`Are you sure you want to remove "${removeContactTarget ? getContactName(removeContactTarget) : "this contact"
+          }"? This action cannot be undone.`}
+        confirmText="Yes, Remove"
+        cancelText="Cancel"
+        variant="danger"
+        loading={confirmLoading}
+        onConfirm={handleDeleteContact}
+      />
     </div>
   );
 }

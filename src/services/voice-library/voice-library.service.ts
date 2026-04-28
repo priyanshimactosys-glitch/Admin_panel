@@ -5,6 +5,7 @@ import { Axios } from "../../lib/api/axios";
 
 export interface VoiceMessageItem {
   id?: number | string;
+  data?:any;
   _id?: string;
   message_name: string;
   lang: string;
@@ -15,8 +16,10 @@ export interface VoiceMessageItem {
   file_url?: string;
   duration?: string;
   size?: string;
+  file_size?: number;
   uploadDate?: string;
   createdAt?: string;
+  created_date?: string;
   usageCount?: number;
   status?: string;
 }
@@ -37,7 +40,7 @@ export interface UploadVoiceMessagePayload {
 
 export const getVoiceMessages = async (): Promise<GetVoiceMessagesResponse> => {
   const response = await Axios.get(API_ENDPOINTS.VOICE_MESSAGES.GET_ALL);
-  return response;
+  return response.data;
 };
 
 export const uploadVoiceMessage = async (

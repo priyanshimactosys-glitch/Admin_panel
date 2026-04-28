@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -113,7 +114,7 @@ export default function VoiceLibrary() {
   useEffect(() => {
     fetchMessages();
   }, []);
-
+console.log('==>messages',messages)
   const filteredMessages = useMemo(() => {
     return messages.filter((message) =>
       (message.message_name || "")
@@ -121,7 +122,7 @@ export default function VoiceLibrary() {
         .includes(searchQuery.toLowerCase())
     );
   }, [messages, searchQuery]);
-
+console.log('==>filteredMessages',filteredMessages)
   const handlePlayPause = (id: number | string) => {
     setPlayingId((prev) => (prev === id ? null : id));
   };
@@ -495,15 +496,15 @@ export default function VoiceLibrary() {
                           {message.message_name}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">
-                          {formatDate(message.createdAt || message.uploadDate)}
+                          {formatDate(message.created_date || message.uploadDate)}
                         </p>
                       </div>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          {/* <Button variant="ghost" size="sm">
                             <MoreVertical className="w-4 h-4" />
-                          </Button>
+                          </Button> */}
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end">
@@ -574,19 +575,19 @@ export default function VoiceLibrary() {
                         </span>
                       </div>
 
-                      {/* <div className="flex items-center justify-between text-sm gap-3">
+                      <div className="flex items-center justify-between text-sm gap-3">
                         <span className="text-gray-600">File Size:</span>
                         <span className="text-gray-900">
-                          {message.size || "-"}
+                          {message.file_size || "-"}
                         </span>
-                      </div> */}
+                      </div>
 
-                      <div className="flex items-center justify-between text-sm gap-3">
+                      {/* <div className="flex items-center justify-between text-sm gap-3">
                         <span className="text-gray-600">Status:</span>
                         <span className="text-gray-900 capitalize">
                           {message.status || "active"}
                         </span>
-                      </div>
+                      </div> */}
                     </div>
 
                     {message.description ? (

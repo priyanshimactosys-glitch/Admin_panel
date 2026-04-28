@@ -11,6 +11,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Signup from "./pages/Signup";
+import ViewCampaign from "./pages/ViewCampaign";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,8 @@ export const router = createBrowserRouter([
           { index: true, Component: Dashboard },
           { path: "campaigns", Component: Campaigns },
           { path: "campaigns/create", Component: CreateCampaign },
+          { path: "campaigns/edit/:id", Component: CreateCampaign },
+          { path: "campaigns/view/:id", Component: ViewCampaign },
           { path: "voice-library", Component: VoiceLibrary },
           { path: "contacts", Component: Contacts },
           { path: "analytics", Component: Analytics },
