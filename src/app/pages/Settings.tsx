@@ -23,6 +23,7 @@ import {
   updateSettings,
   SettingsData,
 } from "../../services/settings/settingsService";
+import toast from "react-hot-toast";
 
 const initialSettings: SettingsData = {
   system_name: "",
@@ -111,8 +112,7 @@ export default function Settings() {
         notify_on_complete: formData.notify_on_complete,
         notify_on_fail: formData.notify_on_fail,
       });
-
-      alert("Settings updated successfully");
+      toast.success("Settings updated successfully");
       fetchSettings();
     } catch (error) {
       console.error("Update Settings Error:", error);
@@ -150,7 +150,7 @@ export default function Settings() {
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="calling">Calling</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          {/* <TabsTrigger value="integration">Integration</TabsTrigger>
+            {/* <TabsTrigger value="integration">Integration</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger> */}
           </TabsList>
 

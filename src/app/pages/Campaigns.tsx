@@ -395,6 +395,7 @@ export default function Campaigns() {
                                 size="sm"
                                 disabled={isActionLoading}
                                 onClick={() => handlePause(campaign)}
+                                title="Pause Campaign"
                               >
                                 {isActionLoading ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -412,6 +413,7 @@ export default function Campaigns() {
                                   size="sm"
                                   disabled={isActionLoading}
                                   onClick={() => handleLaunch(campaign)}
+                                  title="Start Campaign"
                                 >
                                   {isActionLoading ? (
                                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -427,6 +429,7 @@ export default function Campaigns() {
                                 size="sm"
                                 disabled={isActionLoading}
                                 onClick={() => handleStop(campaign)}
+                                title="Stop Campaign"
                               >
                                 {isActionLoading ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -446,10 +449,9 @@ export default function Campaigns() {
                               >
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
-
                               {openActionId === campaignId && (
                                 <div className="relative inline-block">
-                                
+
                                   {openActionId === campaignId && (
                                     <div className="absolute right-0 top-9 z-[99999] w-40 rounded-lg border border-gray-200 bg-white shadow-xl">
                                       <button

@@ -44,6 +44,7 @@ import {
   UserItem,
   UserRoleType,
 } from "../../services/user/userService";
+import toast from "react-hot-toast";
 
 const roleDescriptions: Record<string, string> = {
   "Super Admin": "Full system access and control",
@@ -118,6 +119,7 @@ export default function Users() {
       setEditOpen(false);
       setSelectedUser(null);
       fetchData();
+      toast.success("User updated successfully");
     } catch (error) {
       console.error("Update User Error:", error);
       alert("Failed to update user");
@@ -141,9 +143,10 @@ export default function Users() {
       setDeleteOpen(false);
       setSelectedUser(null);
       fetchData();
+      toast.success("User deleted successfully");
     } catch (error) {
       console.error("Delete User Error:", error);
-      alert("Failed to delete user");
+      toast.error("Failed to delete user");
     } finally {
       setDeleting(false);
     }
@@ -228,6 +231,7 @@ export default function Users() {
       setFormData(initialForm);
       setOpen(false);
       fetchData();
+      toast.success("User created successfully");
     } catch (error) {
       console.error("Create User Error:", error);
       alert("Failed to create user");
@@ -243,24 +247,14 @@ export default function Users() {
       });
 
       fetchData();
+      toast.success(`User ${user.status === 1 ? "deactivated" : "activated"} successfully`);
     } catch (error) {
       console.error("Update Status Error:", error);
       alert("Failed to update user status");
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-    if (!confirmDelete) return;
 
-    try {
-      await deleteUser(id);
-      fetchData();
-    } catch (error) {
-      console.error("Delete User Error:", error);
-      alert("Failed to delete user");
-    }
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -542,7 +536,7 @@ export default function Users() {
                       Campaigns
                     </th>
                     <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">
-                      Actionsddd
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -621,7 +615,7 @@ export default function Users() {
                                 Edit User
                               </button>
 
-                          
+
 
                               <button
                                 type="button"

@@ -100,6 +100,17 @@ export default function VoiceLibrary() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<UploadFormState>(initialForm);
   const [openActionId, setOpenActionId] = useState<string | number | null>(null);
+  const [durations, setDurations] = useState<Record<string | number, number>>({});
+  const totalDuration = Object.values(durations).reduce(
+    (sum, val) => sum + val,
+    0
+  );
+  const formatDuration = (sec?: number) => {
+    if (!sec) return "--";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -203,7 +214,6 @@ export default function VoiceLibrary() {
         .includes(searchQuery.toLowerCase())
     );
   }, [messages, searchQuery]);
-  console.log('==>filteredMessages', filteredMessages)
   const handlePlayPause = (id: number | string) => {
     setPlayingId((prev) => (prev === id ? null : id));
   };
@@ -286,18 +296,12 @@ export default function VoiceLibrary() {
     messages.map((item) => (item.lang || "").trim()).filter(Boolean)
   ).size;
 
-  const totalStorage = messages.reduce((sum, item) => {
-    const raw = item.size || "";
-    const lower = raw.toLowerCase().trim();
-
-    if (lower.endsWith("kb")) {
-      return sum + parseFloat(lower.replace("kb", "").trim()) / 1024;
-    }
-    if (lower.endsWith("mb")) {
-      return sum + parseFloat(lower.replace("mb", "").trim());
-    }
-    return sum;
+  const totalStorageMB = messages.reduce((sum, item) => {
+    const sizeInBytes = item.file_size || 0;
+    return sum + sizeInBytes;
   }, 0);
+
+  const totalStorage = totalStorageMB / (1024 * 1024);
 
   return (
     <div className="p-6 space-y-6">
@@ -525,7 +529,7 @@ export default function VoiceLibrary() {
               <div>
                 <p className="text-sm text-gray-600">Total Duration</p>
                 <p className="text-2xl font-semibold text-gray-900 mt-2">
-                  --
+                  {formatDuration(totalDuration)}
                 </p>
               </div>
               <div className="bg-green-100 p-3 rounded-lg">
@@ -609,7 +613,7 @@ export default function VoiceLibrary() {
                               Edit
                             </button>
 
-                          
+
 
                             <button
                               type="button"
@@ -654,7 +658,15 @@ export default function VoiceLibrary() {
                               controls
                               className="w-full"
                               src={import.meta.env.VITE_REACT_UPLOAD_URL + "/" + message.audio_file}
-                              preload="none"
+                              preload="metadata"
+                              onLoadedMetadata={(e) => {
+                                const duration = e.currentTarget.duration;
+
+                                setDurations((prev) => ({
+                                  ...prev,
+                                  [itemId]: duration,
+                                }));
+                              }}
                             />
                           ) : (
                             <p className="text-xs text-gray-500">

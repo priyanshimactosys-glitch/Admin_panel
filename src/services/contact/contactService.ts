@@ -146,6 +146,7 @@ export interface ImportContactsResponse {
   data?: any;
 }
 
+
 /* ================= CONTACT LIST API ================= */
 
 export const getContactLists = async (
