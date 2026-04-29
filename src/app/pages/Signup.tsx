@@ -21,7 +21,6 @@ interface SignupForm {
 /* ================= DATA ================= */
 
 const roleTypes: RoleType[] = [
-    "Super Admin",
     "Campaign Manager",
     "Operator",
     "Analyst",

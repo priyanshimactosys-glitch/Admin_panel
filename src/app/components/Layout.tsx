@@ -17,9 +17,9 @@ import { Button } from "./ui/button";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Campaigns", href: "/campaigns", icon: Radio },
-  { name: "Voice Library", href: "/voice-library", icon: Mic },
   { name: "Contacts", href: "/contacts", icon: Users },
+  { name: "Voice Library", href: "/voice-library", icon: Mic },
+  { name: "Campaigns", href: "/campaigns", icon: Radio },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "User Management", href: "/users", icon: UserCog },
   { name: "Settings", href: "/settings", icon: Settings },

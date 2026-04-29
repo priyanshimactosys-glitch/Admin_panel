@@ -3,7 +3,8 @@ export const API_ENDPOINTS = {
   VOICE_MESSAGES: {
     GET_ALL: "/voice-lib",
     CREATE: "/voice-lib",
-    DELETE: (id: string | number) => `/voice-messages/${id}`,
+    UPDATE: (id: string | number) => `/voice-lib/${id}`,
+    DELETE: (id: string | number) => `/voice-lib/${id}`,
   },
   AUTH: {
     LOGIN: "/auth/login",

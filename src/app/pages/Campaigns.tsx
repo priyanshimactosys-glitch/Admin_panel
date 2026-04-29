@@ -449,16 +449,7 @@ export default function Campaigns() {
 
                               {openActionId === campaignId && (
                                 <div className="relative inline-block">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      setOpenActionId(openActionId === campaignId ? null : campaignId)
-                                    }
-                                  >
-                                    <MoreVertical className="w-4 h-4" />
-                                  </Button>
-
+                                
                                   {openActionId === campaignId && (
                                     <div className="absolute right-0 top-9 z-[99999] w-40 rounded-lg border border-gray-200 bg-white shadow-xl">
                                       <button

@@ -16,6 +16,7 @@ import {
   Languages,
   MoreVertical,
   Loader2,
+  Edit,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,7 +41,7 @@ import {
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "react-hot-toast";
-import { getVoiceMessages, deleteVoiceMessage, uploadVoiceMessage, VoiceMessageItem } from "../../services/voice-library/voice-library.service";
+import { getVoiceMessages, deleteVoiceMessage, uploadVoiceMessage, updateVoiceMessage, VoiceMessageItem } from "../../services/voice-library/voice-library.service";
 
 
 type UploadFormState = {
@@ -95,9 +96,10 @@ export default function VoiceLibrary() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
-
+  const [editingMessage, setEditingMessage] = useState<VoiceMessageItem | null>(null);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<UploadFormState>(initialForm);
-
+  const [openActionId, setOpenActionId] = useState<string | number | null>(null);
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -114,7 +116,86 @@ export default function VoiceLibrary() {
   useEffect(() => {
     fetchMessages();
   }, []);
-console.log('==>messages',messages)
+  const handleEditOpen = (message: VoiceMessageItem) => {
+    setEditingMessage(message);
+
+    setForm({
+      message_name: message.message_name || "",
+      language: message.lang || "",
+      category: message.category || "",
+      description: message.description || "",
+      audio_file: null,
+    });
+
+    setIsDialogOpen(true);
+  };
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingMessage(null);
+    resetForm();
+  };
+  const handleSaveVoiceMessage = async () => {
+    if (!form.message_name.trim()) {
+      toast.error("Message name is required");
+      return;
+    }
+
+    if (!form.language.trim()) {
+      toast.error("Language is required");
+      return;
+    }
+
+    if (!form.category.trim()) {
+      toast.error("Category is required");
+      return;
+    }
+
+    if (!editingMessage && !form.audio_file) {
+      toast.error("Audio file is required");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      if (editingMessage) {
+        const id = editingMessage._id || editingMessage.id;
+
+        if (!id) {
+          toast.error("Invalid voice message id");
+          return;
+        }
+
+        await updateVoiceMessage(id, {
+          message_name: form.message_name,
+          lang: form.language,
+          category: form.category,
+          description: form.description,
+          audio_file: form.audio_file,
+        });
+
+        toast.success("Voice message updated successfully");
+      } else {
+        await uploadVoiceMessage({
+          message_name: form.message_name,
+          lang: form.language,
+          category: form.category,
+          description: form.description,
+          audio_file: form.audio_file as File,
+        });
+
+        toast.success("Voice message uploaded successfully");
+      }
+
+      handleCloseDialog();
+      fetchMessages();
+    } catch (error) {
+      console.error("SAVE voice message error:", error);
+      toast.error(editingMessage ? "Failed to update voice message" : "Failed to upload voice message");
+    } finally {
+      setSaving(false);
+    }
+  };
   const filteredMessages = useMemo(() => {
     return messages.filter((message) =>
       (message.message_name || "")
@@ -122,7 +203,7 @@ console.log('==>messages',messages)
         .includes(searchQuery.toLowerCase())
     );
   }, [messages, searchQuery]);
-console.log('==>filteredMessages',filteredMessages)
+  console.log('==>filteredMessages', filteredMessages)
   const handlePlayPause = (id: number | string) => {
     setPlayingId((prev) => (prev === id ? null : id));
   };
@@ -240,7 +321,9 @@ console.log('==>filteredMessages',filteredMessages)
 
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Upload Voice Message</DialogTitle>
+              <DialogTitle>
+                {editingMessage ? "Edit Voice Message" : "Upload Voice Message"}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 mt-4">
@@ -358,15 +441,17 @@ console.log('==>filteredMessages',filteredMessages)
               <div className="flex gap-3 pt-4">
                 <Button
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  onClick={handleUpload}
-                  disabled={uploading}
+                  onClick={handleSaveVoiceMessage}
+                  disabled={saving}
                   type="button"
                 >
-                  {uploading ? (
+                  {saving ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
+                      {editingMessage ? "Updating..." : "Uploading..."}
                     </>
+                  ) : editingMessage ? (
+                    "Update"
                   ) : (
                     "Upload"
                   )}
@@ -376,11 +461,8 @@ console.log('==>filteredMessages',filteredMessages)
                   variant="outline"
                   className="flex-1"
                   type="button"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    resetForm();
-                  }}
-                  disabled={uploading}
+                  onClick={handleCloseDialog}
+                  disabled={saving}
                 >
                   Cancel
                 </Button>
@@ -500,33 +582,54 @@ console.log('==>filteredMessages',filteredMessages)
                         </p>
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          {/* <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button> */}
-                        </DropdownMenuTrigger>
+                      <div className="relative shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setOpenActionId((prev) => (prev === itemId ? null : itemId))
+                          }
+                          className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
 
-                        <DropdownMenuContent align="end">
-                          {audioSrc ? (
-                            <DropdownMenuItem asChild>
-                              <a href={audioSrc} download>
-                                <Download className="w-4 h-4 mr-2" />
-                                Download
-                              </a>
-                            </DropdownMenuItem>
-                          ) : null}
+                        {openActionId === itemId && (
+                          <div className="absolute right-0 top-9 z-50 w-40 rounded-xl border border-gray-200 bg-white p-1 shadow-xl">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                handleEditOpen(message);
+                              }}
+                              className="flex w-full items-center rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              <Edit className="w-4 h-4 mr-2 text-gray-500" />
+                              Edit
+                            </button>
 
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => handleDelete(itemId)}
-                            disabled={deletingId === itemId}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            {deletingId === itemId ? "Deleting..." : "Delete"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                handleDelete(itemId);
+                              }}
+                              disabled={deletingId === itemId}
+                              className="flex w-full items-center rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                            >
+                              {deletingId === itemId ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4 mr-2" />
+                              )}
+                              {deletingId === itemId ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="bg-gray-100 rounded-lg p-4">

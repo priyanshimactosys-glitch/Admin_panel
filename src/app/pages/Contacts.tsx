@@ -348,7 +348,17 @@ export default function Contacts() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="flex items-center justify-between">
 
+                  <a
+                    href="/sample-contacts-by-province.xlsx"
+                    download
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Sample
+                  </a>
+                </div>
                 <div>
                   <Label htmlFor="file-import">File Upload</Label>
                   <div className="mt-1.5 flex items-center justify-center w-full">
