@@ -84,6 +84,7 @@ export default function Contacts() {
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [selectedListForContact, setSelectedListForContact] = useState<any>(null);
   const [creatingContact, setCreatingContact] = useState(false);
+    const [importSource, setImportSource] = useState("csv");
   const [contactForm, setContactForm] = useState({
     title: "Mr",
     name: "",
@@ -298,7 +299,7 @@ export default function Contacts() {
   };
 
   const handleImport = async () => {
-    if (!selectedListId || !importFile) {
+    if (!importFile) {
       alert("Please select list and file");
       return;
     }
@@ -418,20 +419,16 @@ export default function Contacts() {
 
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label>Select Contact List</Label>
-                  <Select
-                    value={selectedListId}
-                    onValueChange={setSelectedListId}
-                  >
+                  <Label>Import Source</Label>
+                  <Select value={importSource} onValueChange={setImportSource} disabled>
                     <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Select list" />
+                      <SelectValue placeholder="Select import source" />
                     </SelectTrigger>
+
                     <SelectContent>
-                      {contactLists.map((list) => (
-                        <SelectItem key={getListId(list)} value={getListId(list)}>
-                          {list.list_name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="manual">Manual Entry</SelectItem>
+                      <SelectItem value="csv">CSV File</SelectItem>
+                      <SelectItem value="excel">Excel File</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
