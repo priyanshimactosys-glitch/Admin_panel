@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     LAUNCH: (id: string) => `/campaigns/${id}/launch`,
     PAUSE: (id: string) => `/campaigns/${id}/pause`,
     CHANGE_STATUS: (id: string) => `/campaigns/${id}/status`,
+    EXECUTE: (id: string) => `/campaigns/${id}/execute`,
   },
   CONTACTS: {
     LISTS: "/contact-lists",

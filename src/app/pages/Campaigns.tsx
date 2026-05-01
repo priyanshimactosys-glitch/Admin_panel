@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Square,
+  RotateCcw,
   MoreVertical,
   Eye,
   Edit,
@@ -39,8 +40,10 @@ import {
   changeCampaignStatus,
   deleteCampaign,
   type CampaignItem,
+  executeCampaign,
 } from "../../services/campaign/campaignService";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import toast from "react-hot-toast";
 
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
@@ -148,8 +151,10 @@ export default function Campaigns() {
       setActionLoadingId(id);
       await launchCampaign(id);
       await fetchCampaigns();
+      toast.success(`Campaign "${campaign.campaign_name}" launched successfully!`);
     } catch (error) {
       console.error("Failed to launch campaign:", error);
+      toast.error(error.response?.data?.message || "Failed to launch campaign");
     } finally {
       setActionLoadingId(null);
     }
@@ -163,24 +168,41 @@ export default function Campaigns() {
       setActionLoadingId(id);
       await pauseCampaign(id);
       await fetchCampaigns();
+      toast.success(`Campaign "${campaign.campaign_name}" paused successfully!`);
     } catch (error) {
       console.error("Failed to pause campaign:", error);
+      toast.error(error.response?.data?.message || "Failed to pause campaign");
     } finally {
       setActionLoadingId(null);
     }
   };
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleStop = async (campaign: CampaignItem) => {
     const id = getCampaignId(campaign);
     if (!id) return;
 
+    const isStartButton = campaign.status !== "completed";
+
     try {
       setActionLoadingId(id);
-      await changeCampaignStatus(id, "completed");
-      await fetchCampaigns();
+      await executeCampaign(id);
+
+      if (!isStartButton) {
+        await fetchCampaigns();
+      }
+      toast.success(`Campaign "${campaign.campaign_name}" ${isStartButton ? "started" : "restarted"}!`);
+
     } catch (error) {
-      console.error("Failed to stop campaign:", error);
+      console.error("Error:", error);
+      toast.error("Failed to execute campaign");
     } finally {
+      if (isStartButton) {
+        console.log("Start clicked: Waiting 3 seconds...");
+        await delay(3000);
+        await fetchCampaigns();
+      }
+
       setActionLoadingId(null);
     }
   };
@@ -195,8 +217,10 @@ export default function Campaigns() {
       await deleteCampaign(id);
       setDeleteTarget(null);
       await fetchCampaigns();
+      toast.success(`Campaign "${deleteTarget.campaign_name}" deleted successfully!`);
     } catch (error) {
       console.error("Failed to delete campaign:", error);
+      toast.error(error.response?.data?.message || "Failed to delete campaign");
     } finally {
       setActionLoadingId(null);
     }
@@ -337,10 +361,10 @@ export default function Campaigns() {
                         <td className="py-4 px-4">
                           <Badge
                             className={`${getStatusColor(
-                              campaign.status
+                              campaign.status === "draft" ? "pending" : status
                             )} capitalize`}
                           >
-                            {campaign.status || "N/A"}
+                            {campaign.status === 'draft' ? 'Pending' : campaign.status || "N/A"}
                           </Badge>
                         </td>
 
@@ -389,7 +413,7 @@ export default function Campaigns() {
 
                         <td className="py-4 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {status === "active" && (
+                            {/* {status === "active" && ( */}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -403,9 +427,9 @@ export default function Campaigns() {
                                   <Pause className="w-3 h-3" />
                                 )}
                               </Button>
-                            )}
+                            {/* )} */}
 
-                            {(status === "paused" ||
+                            {/* {(status === "paused" ||
                               status === "scheduled" ||
                               status === "draft") && (
                                 <Button
@@ -421,24 +445,40 @@ export default function Campaigns() {
                                     <Play className="w-3 h-3" />
                                   )}
                                 </Button>
-                              )}
+                              )} */}
 
-                            {(status === "active" || status === "paused") && (
+                            {status !== "completed" && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 disabled={isActionLoading}
                                 onClick={() => handleStop(campaign)}
-                                title="Stop Campaign"
+                                title="Execute Campaign"
+                                className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
                               >
                                 {isActionLoading ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
                                 ) : (
-                                  <Square className="w-3 h-3" />
+                                  <span>Start</span>
                                 )}
                               </Button>
                             )}
 
+                            {status === "completed" && (
+                              <Button
+                                size="sm"
+                                disabled={isActionLoading}
+                                onClick={() => handleStop(campaign)}
+                                title="Execute Campaign"
+                                className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
+                              >
+                                {isActionLoading ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <span>Restart</span>
+                                )}
+                              </Button>
+                            )}
                             <div className="relative inline-block">
                               <Button
                                 variant="ghost"

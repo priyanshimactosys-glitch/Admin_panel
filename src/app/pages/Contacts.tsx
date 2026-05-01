@@ -1162,7 +1162,7 @@ export default function Contacts() {
                   </Card>
                 );
               })}
-              <div className="flex justify-center gap-2 mt-6">
+              {/* <div className="flex justify-center gap-2 mt-6">
                 <Button
                   variant="outline"
                   disabled={page === 1}
@@ -1182,7 +1182,7 @@ export default function Contacts() {
                 >
                   Next
                 </Button>
-              </div>
+              </div> */}
             </div>
           )}
         </TabsContent>

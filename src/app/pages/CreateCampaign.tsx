@@ -36,6 +36,7 @@ import {
 } from "../../services/campaign/campaignService";
 import { getVoiceMessages } from "../../services/voice-library/voice-library.service";
 import { getContactLists } from "../../services/contact/contactService";
+import toast from "react-hot-toast";
 
 const languagesList = ["English", "Bemba", "Nyanja", "Tonga", "Lozi", "Lunda"];
 
@@ -188,55 +189,65 @@ export default function CreateCampaign() {
     sms_followup: formData.sms_followup,
     cost_per_call: Number(formData.cost_per_call || 0.15),
   });
-const buildDraftPayload = () => ({
-  campaign_name: formData.campaign_name,
-  campaign_type: formData.campaign_type,
-  description: formData.description,
-  languages: formData.languages,
-  schedule_type:
-    formData.schedule_type === "immediate"
-      ? "Start Immediately"
-      : "Schedule for Later",
-  start_date: formData.start_date || null,
-  end_date: formData.end_date || null,
-});
- const handleSaveDraft = async () => {
-  if (!formData.campaign_name.trim()) {
-    alert("Campaign name is required");
-    return;
-  }
-
-  try {
-    setSubmitLoading(true);
-
-    const draftPayload = buildDraftPayload();
-
-    if (isEditMode && id) {
-      await updateCampaign(id, {
-        ...draftPayload,
-        status: "draft",
-      });
-    } else {
-      await saveCampaignAsDraft(draftPayload);
-    }
-
-    navigate("/campaigns");
-  } catch (error) {
-    console.error("Failed to save draft:", error);
-    alert("Failed to save draft");
-  } finally {
-    setSubmitLoading(false);
-  }
-};
-
-  const handleSubmit = async () => {
+  const buildDraftPayload = () => ({
+    campaign_name: formData.campaign_name,
+    campaign_type: formData.campaign_type,
+    description: formData.description,
+    languages: formData.languages,
+    schedule_type:
+      formData.schedule_type === "immediate"
+        ? "Start Immediately"
+        : "Schedule for Later",
+    start_date: formData.start_date || null,
+    end_date: formData.end_date || null,
+  });
+  const handleSaveDraft = async () => {
     if (!formData.campaign_name.trim()) {
       alert("Campaign name is required");
       return;
     }
 
+    try {
+      setSubmitLoading(true);
+
+      const draftPayload = buildDraftPayload();
+
+      if (isEditMode && id) {
+        await updateCampaign(id, {
+          ...draftPayload,
+          status: "draft",
+        });
+      } else {
+        await saveCampaignAsDraft(draftPayload);
+      }
+
+      navigate("/campaigns");
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      toast.error("Failed to save draft");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.campaign_name.trim()) {
+      toast.error("Campaign name is required");
+      return;
+    }
+
     if (formData.languages.length === 0) {
-      alert("Please select at least one language");
+      toast.error("Please select at least one language");
+      return;
+    }
+
+    if (!formData.voice_message_id) {
+      toast.error("Voice message is required");
+      return;
+    }
+
+    if (!formData.contact_list_id) {
+      toast.error("Contact list is required");
       return;
     }
 
@@ -249,10 +260,6 @@ const buildDraftPayload = () => ({
       } else {
         const response = await createCampaign(buildPayload());
         const campaignId = response?.data?._id || response?.data?.id;
-
-        if (campaignId) {
-          await launchCampaign(campaignId);
-        }
 
         navigate("/campaigns");
       }
@@ -500,17 +507,17 @@ const buildDraftPayload = () => ({
                       <SelectValue placeholder="All Provinces" />
                     </SelectTrigger>
                     <SelectContent>
-                     <SelectItem value="All Provinces">All Provinces</SelectItem>
-<SelectItem value="Lusaka">Lusaka</SelectItem>
-<SelectItem value="Copperbelt">Copperbelt</SelectItem>
-<SelectItem value="Southern">Southern</SelectItem>
-<SelectItem value="Eastern">Eastern</SelectItem>
-<SelectItem value="Western">Western</SelectItem>
-<SelectItem value="Northern">Northern</SelectItem>
-<SelectItem value="North-Western">North-Western</SelectItem>
-<SelectItem value="Central">Central</SelectItem>
-<SelectItem value="Luapula">Luapula</SelectItem>
-<SelectItem value="Muchinga">Muchinga</SelectItem>
+                      <SelectItem value="All Provinces">All Provinces</SelectItem>
+                      <SelectItem value="Lusaka">Lusaka</SelectItem>
+                      <SelectItem value="Copperbelt">Copperbelt</SelectItem>
+                      <SelectItem value="Southern">Southern</SelectItem>
+                      <SelectItem value="Eastern">Eastern</SelectItem>
+                      <SelectItem value="Western">Western</SelectItem>
+                      <SelectItem value="Northern">Northern</SelectItem>
+                      <SelectItem value="North-Western">North-Western</SelectItem>
+                      <SelectItem value="Central">Central</SelectItem>
+                      <SelectItem value="Luapula">Luapula</SelectItem>
+                      <SelectItem value="Muchinga">Muchinga</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -527,11 +534,11 @@ const buildDraftPayload = () => ({
                       <SelectValue placeholder="All Ages" />
                     </SelectTrigger>
                     <SelectContent>
-                     <SelectItem value="All Ages">All Ages</SelectItem>
-<SelectItem value="18-25 years">18-25 years</SelectItem>
-<SelectItem value="26-35 years">26-35 years</SelectItem>
-<SelectItem value="36-50 years">36-50 years</SelectItem>
-<SelectItem value="51+ years">51+ years</SelectItem>
+                      <SelectItem value="All Ages">All Ages</SelectItem>
+                      <SelectItem value="18-25 years">18-25 years</SelectItem>
+                      <SelectItem value="26-35 years">26-35 years</SelectItem>
+                      <SelectItem value="36-50 years">36-50 years</SelectItem>
+                      <SelectItem value="51+ years">51+ years</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -633,10 +640,9 @@ const buildDraftPayload = () => ({
               <div>
                 <Label>Caller ID Display</Label>
                 <Input
-                  value={formData.caller_id}
-                  onChange={(e) => handleChange("caller_id", e.target.value)}
-                  placeholder="e.g., Voxis System"
-                  className="mt-1.5"
+                  value="260761168397"
+                  disabled
+                  className="mt-1.5 bg-gray-100 cursor-not-allowed"
                 />
               </div>
 

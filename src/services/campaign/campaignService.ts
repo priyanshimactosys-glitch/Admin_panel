@@ -215,6 +215,13 @@ export const pauseCampaign = async (
   return response.data;
 };
 
+export const executeCampaign = async (
+  id: string
+): Promise<CampaignSingleResponse> => {
+  const response = await Axios.patch(API_ENDPOINTS.CAMPAIGNS.EXECUTE(id));
+  return response.data;
+};
+
 export const changeCampaignStatus = async (
   id: string,
   status: string
