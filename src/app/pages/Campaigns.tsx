@@ -401,32 +401,39 @@ export default function Campaigns() {
 
                         <td className="py-4 px-4">
                           <div className="text-sm">
-                            <p className="text-gray-900">
-                              {/* {formatDate(campaign.start_date)}
-                            </p>
-                            <p className="text-gray-500">
-                              {formatDate(campaign.end_date)} */}
-                              {campaign.schedule_type}
-                            </p>
+                            {campaign.start_date && campaign.end_date ? (
+                              <>
+                                <p className="text-gray-900">
+                                  {formatDate(campaign.start_date)}
+                                </p>
+                                <p className="text-gray-500">
+                                  {formatDate(campaign.end_date)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-blue-600 font-medium">
+                                {campaign.schedule_type}
+                              </p>
+                            )}
                           </div>
                         </td>
 
                         <td className="py-4 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {/* {status === "active" && ( */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isActionLoading}
-                                onClick={() => handlePause(campaign)}
-                                title="Pause Campaign"
-                              >
-                                {isActionLoading ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Pause className="w-3 h-3" />
-                                )}
-                              </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={isActionLoading}
+                              onClick={() => handlePause(campaign)}
+                              title="Pause Campaign"
+                            >
+                              {isActionLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Pause className="w-3 h-3" />
+                              )}
+                            </Button>
                             {/* )} */}
 
                             {/* {(status === "paused" ||

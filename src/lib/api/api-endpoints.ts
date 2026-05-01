@@ -58,4 +58,13 @@ export const API_ENDPOINTS = {
     DELETE_CONTACT: (id: string) => `/contacts/${id}`,
     STATS: "/contacts/stats",
   },
+  ANALYTICS: {
+    SUMMARY: "/analytics/summary",
+    CALL_VOLUME: "/analytics/trend",
+    PEAK_TIMES: "/analytics/peak-times",
+    LANGUAGE_DIST: "/analytics/languages",
+    PROVINCE_PERFORMANCE: "/analytics/provinces",
+    CALL_OUTCOMES: "/analytics/outcomes",
+    RECORD_SNAPSHOT: "/analytics/snapshot",
+  }
 };
