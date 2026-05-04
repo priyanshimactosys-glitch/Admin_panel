@@ -570,27 +570,30 @@ export default function CreateCampaign() {
                 </div>
               </RadioGroup>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Start Date & Time</Label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.start_date}
-                    onChange={(e) => handleChange("start_date", e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
+              {/* Agar schedule_type 'immediate' nahi hai, tabhi ye div dikhega */}
+              {formData.schedule_type !== "immediate" && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
+                  <div>
+                    <Label>Start Date & Time</Label>
+                    <Input
+                      type="datetime-local"
+                      value={formData.start_date}
+                      onChange={(e) => handleChange("start_date", e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
 
-                <div>
-                  <Label>End Date & Time</Label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.end_date}
-                    onChange={(e) => handleChange("end_date", e.target.value)}
-                    className="mt-1.5"
-                  />
+                  <div>
+                    <Label>End Date & Time</Label>
+                    <Input
+                      type="datetime-local"
+                      value={formData.end_date}
+                      onChange={(e) => handleChange("end_date", e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

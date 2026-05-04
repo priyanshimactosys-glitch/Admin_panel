@@ -454,37 +454,41 @@ export default function Campaigns() {
                                 </Button>
                               )} */}
 
-                            {status !== "completed" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={isActionLoading}
-                                onClick={() => handleStop(campaign)}
-                                title="Execute Campaign"
-                                className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
-                              >
-                                {isActionLoading ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <span>Start</span>
+                            {campaign.schedule_type === "Start Immediately" && (
+                              <>
+                                {status !== "completed" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isActionLoading}
+                                    onClick={() => handleStop(campaign)}
+                                    title="Execute Campaign"
+                                    className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
+                                  >
+                                    {isActionLoading ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <span>Start</span>
+                                    )}
+                                  </Button>
                                 )}
-                              </Button>
-                            )}
 
-                            {status === "completed" && (
-                              <Button
-                                size="sm"
-                                disabled={isActionLoading}
-                                onClick={() => handleStop(campaign)}
-                                title="Execute Campaign"
-                                className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
-                              >
-                                {isActionLoading ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <span>Restart</span>
+                                {status === "completed" && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isActionLoading}
+                                    onClick={() => handleStop(campaign)}
+                                    title="Execute Campaign"
+                                    className="bg-green-300 hover:bg-green-400 text-green-900 border-green-300"
+                                  >
+                                    {isActionLoading ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <span>Restart</span>
+                                    )}
+                                  </Button>
                                 )}
-                              </Button>
+                              </>
                             )}
                             <div className="relative inline-block">
                               <Button

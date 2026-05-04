@@ -840,16 +840,16 @@ export default function Contacts() {
 
                 <div>
                   <Label>Mobile <span className="text-red-500">*</span></Label>
-                  <Input
-                    placeholder="0971234567"
-                    value={contactForm.mob}
-                    className="mt-1.5"
-                    maxLength={15}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d+]/g, "");
-                      setContactForm((prev) => ({ ...prev, mob: value }));
-                    }}
-                  />
+                 <Input
+  placeholder="0971234567"
+  value={contactForm.mob}
+  className="mt-1.5"
+  maxLength={10}
+  onChange={(e) => {
+    const value = e.target.value.replace(/[^\d]/g, ""); 
+    setContactForm((prev) => ({ ...prev, mob: value }));
+  }}
+/>
                 </div>
 
                 <div>
